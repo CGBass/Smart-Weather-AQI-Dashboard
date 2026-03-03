@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smart Weather AI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Montserrat;
+}
+
+body{
+height:100vh;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+background-size:cover;
+background-position:center;
+transition:1s ease;
+overflow:hidden;
+}
+
+/* ===== HEADER ===== */
+
+.header{
+position:absolute;
+top:20px;
+text-align:center;
+color:white;
+font-size:28px;
+font-weight:600;
+letter-spacing:2px;
+text-shadow:0 4px 15px rgba(0,0,0,0.6);
+z-index:3;
+}
+
+.overlay{
+position:absolute;
+width:100%;
+height:100%;
+background:linear-gradient(135deg,rgba(0,0,0,0.7),rgba(0,0,0,0.3));
+z-index:0;
+}
+
+.card{
+position:relative;
+z-index:2;
+width:480px;
+padding:42px;
+border-radius:28px;
+background:linear-gradient(145deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05));
+backdrop-filter:blur(6px);
+box-shadow:
+0 8px 32px rgba(0,0,0,0.6),
+inset 0 0 15px rgba(255,255,255,0.1);
+text-align:center;
+color:white;
+transition:0.6s;
+}
+
+.card:hover{
+transform:scale(1.03);
+box-shadow:
+0 10px 40px rgba(0,0,0,0.8),
+0 0 20px rgba(0,255,200,0.4);
+}
+
+input{
+width:60%;
+padding:10px;
+border:none;
+border-radius:20px;
+outline:none;
+background:rgba(255,255,255,0.8);
+}
+
+button{
+padding:9px 30px;
+border:none;
+border-radius:20px;
+background:linear-gradient(45deg,#00f2fe,#4facfe);
+color:white;
+cursor:pointer;
+font-weight:500;
+transition:0.4s;
+}
+
+button:hover{
+transform:scale(1.1);
+box-shadow:0 0 15px #00f2fe;
+}
+
+.temp{
+font-size:42px;
+margin-top:5px;
+font-weight:600;
+}
+
+.aqi{
+width:110px;
+height:110px;
+border-radius:50%;
+margin:12px auto;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:22px;
+background:conic-gradient(#00ff99 0deg,rgba(255,255,255,0.1) 0deg);
+transition:1.5s;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:8px;
+margin-top:12px;
+}
+
+.box{
+background:linear-gradient(145deg,rgba(255,255,255,0.2),rgba(255,255,255,0.05));
+padding:8px;
+border-radius:14px;
+font-size:12px;
+box-shadow:inset 0 0 10px rgba(255,255,255,0.1);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">SMART WEATHER & AQI DASHBOARD</div>
+
+<div class="overlay"></div>
+
+<div class="card">
+
+<h3 id="cityName"></h3>
+
+<input id="cityInput" placeholder="Search">
+<button onclick="getWeather()">Go</button>
+
+<div class="temp"><span id="temp">--</span>°C</div>
+<p id="desc"></p>
+
+<div class="aqi" id="meter"><span id="aqiValue">--</span></div>
+<p id="aqiText"></p>
+
+<div class="grid">
+<div class="box">Humidity<br><span id="humidity"></span></div>
+<div class="box">Wind<br><span id="wind"></span></div>
+<div class="box">Pressure<br><span id="pressure"></span></div>
+<div class="box">UV<br><span id="uv"></span></div>
+<div class="box">Sunrise<br><span id="sunrise"></span></div>
+<div class="box">Sunset<br><span id="sunset"></span></div>
+</div>
+
+</div>
+
+<script>
+
+const key="4d8fb5b93d4af21d66a2948710284366";
+
+/* ===== BIG IMAGE POOL ===== */
+
+const imagePool = [
+"1502082553048-f009c37129b9",
+"1501696461415-6bd6660c6742",
+"1499346030926-9a72daac6c63",
+"1504384308090-c894fdcc538d",
+"1507525428034-b723cf961d3e",
+"1470770841072-f978cf4d019e",
+"1469474968028-56623f02e42e",
+"1500530855697-b586d89ba3ee",
+"1472214103451-9374bd1c798e",
+"1482192596544-9eb780fc7f66",
+"1493244040629-496f6d136cc3",
+"1439066615861-d1af74d74000",
+"1441974231531-c6227db76b6e",
+"1501785888041-af3ef285b470",
+"1500534314209-a25ddb2bd429",
+"1505483531331-3fbcf87c9f0e",
+"1491553895911-0055eca6402d",
+"1505678261036-a3fcc5e884ee",
+"1503264116251-35a269479413",
+"1506744038136-46273834b3fb",
+"1499346030926-9a72daac6c63",
+"1500534314209-a25ddb2bd429",
+"1470770841072-f978cf4d019e",
+"1502082553048-f009c37129b9"
+];
+
+function getUnlimitedBackground(){
+let randomIndex = Math.floor(Math.random() * imagePool.length);
+let imageId = imagePool[randomIndex];
+let url = `https://images.unsplash.com/photo-${imageId}?auto=format&fit=crop&w=1600&q=80`;
+document.body.style.backgroundImage = `url('${url}')`;
+}
+
+function AQItext(aqi){
+return ["Good 🟢","Fair 🟡","Moderate 🟠","Poor 🔴","Very Poor 🟣"][aqi-1];
+}
+
+function animateAQI(aqi){
+let deg=aqi*72;
+let color=["#00ff99","#d4ff00","orange","red","purple"];
+let current=0;
+let meter=document.getElementById("meter");
+let interval=setInterval(()=>{
+current+=2;
+meter.style.background=
+`conic-gradient(${color[aqi-1]} ${current}deg,rgba(255,255,255,0.1) 0deg)`;
+if(current>=deg){clearInterval(interval);}
+},10);
+document.getElementById("aqiValue").innerText=aqi;
+document.getElementById("aqiText").innerText=AQItext(aqi);
+meter.style.boxShadow=`0 0 30px ${color[aqi-1]}`;
+}
+
+function convertTime(unix,timezone){
+let utc=unix+timezone;
+let d=new Date(utc*1000);
+return d.toUTCString().match(/\d{2}:\d{2}:\d{2}/)[0];
+}
+
+async function getWeather(cityManual){
+
+getUnlimitedBackground();
+
+let city=cityManual || cityInput.value;
+
+let weather=await fetch(
+`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}&units=metric`
+).then(r=>r.json());
+
+document.getElementById("cityName").innerText=weather.name;
+
+temp.innerText=Math.round(weather.main.temp);
+desc.innerText=weather.weather[0].main;
+humidity.innerText=weather.main.humidity+"%";
+wind.innerText=weather.wind.speed+" m/s";
+pressure.innerText=weather.main.pressure+" hPa";
+sunrise.innerText=convertTime(weather.sys.sunrise,weather.timezone);
+sunset.innerText=convertTime(weather.sys.sunset,weather.timezone);
+
+let air=await fetch(
+`https://api.openweathermap.org/data/2.5/air_pollution?lat=${weather.coord.lat}&lon=${weather.coord.lon}&appid=${key}`
+).then(r=>r.json());
+
+animateAQI(air.list[0].main.aqi);
+uv.innerText=(air.list[0].components.o3/100).toFixed(2);
+}
+
+getUnlimitedBackground();
+
+navigator.geolocation.getCurrentPosition(async pos=>{
+getUnlimitedBackground();
+let lat=pos.coords.latitude;
+let lon=pos.coords.longitude;
+let loc=await fetch(
+`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric`
+).then(r=>r.json());
+getWeather(loc.name);
+});
+
+</script>
+
+</body>
+</html>
